@@ -1,0 +1,22 @@
+[Unit]
+Description=Prometheus Apache Exporter (apache_exporter) via ansible role
+Documentation=https://mat-alm-1.materna-com.de/kpi/ansible/roles/basic_exporter
+After=network.target
+
+[Service]
+User={{ prometheus_user }}
+Group={{ prometheus_group }}
+
+WorkingDirectory=-{{ prometheus_install_path }}
+
+Environment=GOGC=40
+Environment=GOMAXPROCS=1
+
+{% if prometheus_apache_exporter_opts is defined %}
+ExecStart={{ prometheus_install_path }}/apache_exporter {{ prometheus_apache_exporter_opts }}
+{% else %}
+ExecStart={{ prometheus_install_path }}/apache_exporter
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

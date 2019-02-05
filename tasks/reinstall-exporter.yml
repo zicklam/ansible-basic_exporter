@@ -1,0 +1,35 @@
+---
+- debug:
+    msg:
+      - "{{ path.stdout }}"
+      - "{{ version.stdout }}"
+      - "{{ systemd_unit.stdout_lines[0] }}"
+      - "{{ systemd_unit.stdout_lines[1] }}"
+
+- name: Kill running process
+  shell: >
+    kill {{ pid_to_kill }}
+  with_items: "{{ pid.stdout_lines }}"
+  loop_control:
+    loop_var: pid_to_kill
+  become: true
+
+- name: Waiting until all running processes are killed
+  wait_for:
+    path: "/proc/{{ pid_to_wait }}/status"
+    state: absent
+  with_items: "{{ pid.stdout_lines }}"
+  loop_control:
+    loop_var: pid_to_wait
+  ignore_errors: yes
+  register: killed_processes  
+
+- name: Force kill stuck processes
+  shell: "kill -9 {{ pid_to_hardkill }}"
+  with_items: "{{ killed_processes.results | select('failed') | map(attribute='pid_to_hardkill') | list }}"
+  loop_control:
+    loop_var: pid_to_hardkill
+  become: true
+
+- name: "start install routine for {{ component }}'"
+  include: install-exporter.yml

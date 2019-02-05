@@ -1,0 +1,38 @@
+---
+# @return
+#  prometheus_{{component}}_tarball_url = @URL
+
+# Set Version and Tag Variables (Tag for Path, Version for the Package Name) for explicit version
+- block: 
+  - name: github.com | set_fact for release tag (out of configuration value)
+    set_fact:
+      prometheus_{{component}}_tag: "{{ vars['prometheus_' + component + '_version'] | regex_replace('^(?!v)([0-9.]+)$', 'v\\1') }}"
+  - name: github.com | set_fact for release version (out of configuration value)
+    set_fact:
+      prometheus_{{component}}_version: "{{ vars['prometheus_' + component + '_version'] | regex_replace('^v([0-9.]+)$', '\\1') }}"
+  when: vars['prometheus_' + component + '_version'] != "latest|git"
+
+# Set Version and Tag Variables (Tag for Path, Version for the Package Name) for latest version
+- block:
+  - name: github.com | get latest release information
+    github_release:
+      user: "{{ vars['git_repo_' + component] | regex_replace('^([A-Za-z0-9.-_]+)\/([A-Za-z0-9.-_]+)$', '\\1') }}"
+      repo: "{{ vars['git_repo_' + component] | regex_replace('^([A-Za-z0-9.-_]+)\/([A-Za-z0-9.-_]+)$', '\\2') }}"
+      action: latest_release
+      token: "{{ github_com_token }}"
+    register: github_release_info
+    connection: local
+  - name: Set fact out of the GitHub Release Information
+    set_fact:
+      prometheus_{{component}}_tag: "{{ github_release_info['tag'] }}"
+  - name: Set fact out of the GitHub Release Information
+    set_fact:
+      prometheus_{{component}}_version: "{{ github_release_info['tag'] | regex_replace('^v([0-9.]+)$', '\\1') }}"
+  when: vars['prometheus_' + component + '_version'] == "latest"
+
+# Create download URL for ready releases from github.com (instead of building them from git source code)
+- block:
+  - name: Get latest GitHub Release Package URL
+    set_fact:
+      prometheus_{{component}}_tarball_url: "https://github.com/{{ vars['git_repo_' + component] }}/releases/download/{{ vars['prometheus_' + component + '_tag'] }}/{{ vars['git_repo_' + component] | regex_replace('^([A-Za-z0-9.-_]+)\/([A-Za-z0-9.-_]+)$', '\\2') }}-{{ vars['prometheus_' + component + '_version'] }}.{{ platform_suffix }}.tar.gz"
+  when: vars['prometheus_' + component + '_version'] != "git"

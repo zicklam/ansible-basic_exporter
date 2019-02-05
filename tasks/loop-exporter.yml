@@ -1,0 +1,47 @@
+---
+# check for already running components
+- name: "check for running process of '{{ component }}'"
+  shell: >
+    echo -n
+    $(pgrep {{ component }})
+  register: pid
+
+# running process found
+# decision-tree if we need to reinstall this component
+- block:
+
+  - name: readlink
+    shell: >
+      readlink /proc/{{ pid.stdout }}/exe
+    become: true
+    register: path
+
+  - name: version
+    shell: >
+      {{ path.stdout }} --version 2>&1 | grep -oP 'version \K[0-9.]+(?=)' || echo -e "0.0.0"
+    register: version
+    
+  - name: Output current running version
+    debug:
+      msg: "{{ path.stdout }} ----> {{ version.stdout }}"
+
+  - name: systemd.unit
+    shell: >
+      systemctl status {{ pid.stdout }} | grep -oP '([a-zA-Z0-9-_\/]+.service)' || echo -e "no_service\nno_service"
+    register: systemd_unit
+
+  - name: remove obsolet processes
+    include: reinstall-exporter.yml
+    when: path.stdout != prometheus_install_path + "/" + component or systemd_unit.stdout_lines[0] != component + ".service" or systemd_unit.stdout_lines[1] != systemd_path + "/" + component + ".service" or version.stdout is version(vars['prometheus_' + component + '_version']|int, '<') or vars['prometheus_' + component + '_force_reinstall']|bool == true
+
+  when:
+    - pid.stdout != ""
+
+# no running process found
+- block:
+  
+  - name: "start install routine for {{ component }}'"
+    include: install-exporter.yml
+
+  when:
+    - pid.stdout == ""

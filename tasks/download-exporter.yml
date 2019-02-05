@@ -1,0 +1,26 @@
+---
+- block:
+    - name: download {{ component }}
+      unarchive:
+        src: "{{ vars['prometheus_' + component + '_tarball_url'] }}"
+        dest: "{{ prometheus_download_path }}"
+        remote_src: yes
+      when: vars['prometheus_' + component + '_tarball_url'] is defined
+      environment: "{{ proxy_env }}"
+
+    - name: move {{ component }} to final location
+      copy:
+        src: "{{ prometheus_download_path }}/{{ vars['git_repo_' + component] | regex_replace('^([A-Za-z0-9.-_]+)\/([A-Za-z0-9.-_]+)$', '\\2') }}-{{ vars['prometheus_' + component + '_version'] }}.{{ platform_suffix }}/{{ vars['git_repo_' + component] | regex_replace('^([A-Za-z0-9.-_]+)\/([A-Za-z0-9.-_]+)$', '\\2') }}"
+        dest: "{{ prometheus_install_path }}/{{ component }}"
+        owner: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        mode: 0755
+        remote_src: yes
+      become: true
+
+    - name: remove temporary files
+      file:
+        path: "{{ prometheus_download_path }}/{{ vars['git_repo_' + component] | regex_replace('^([A-Za-z0-9.-_]+)\/([A-Za-z0-9.-_]+)$', '\\2') }}-{{ vars['prometheus_' + component + '_version'] }}.{{ platform_suffix }}"
+        state: absent
+  when: 
+    - prometheus_node_exporter_version != "git"

@@ -1,0 +1,29 @@
+---
+- include: set-github-variables.yml
+
+- include: download-exporter.yml
+
+# Service installation via systemd
+- block:
+
+  - name: "Check that {{ component }} exists"
+    stat:
+      path: "{{ prometheus_install_path }}/{{ component }}"
+    register: "{{ component }}_stat"
+
+  - name: copy systemd config to server
+    template: 
+      src: "{{ component }}.service.j2"
+      dest: "{{ systemd_path }}/{{ component }}.service"
+    become: true
+    when: vars[component + '_stat'].stat.exists|bool == true
+    
+  - name: enable systemd service {{ component }}
+    systemd:
+      name: "{{ component }}.service"
+      enabled: yes
+      daemon_reload: yes
+      state: started
+    become: true
+  
+  when: ansible_service_mgr == "systemd"

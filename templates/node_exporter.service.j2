@@ -1,0 +1,22 @@
+[Unit]
+Description=Prometheus Node Exporter (node_exporter) via ansible role
+Documentation=https://mat-alm-1.materna-com.de/kpi/ansible/roles/basic_exporter
+After=network.target
+
+[Service]
+User={{ prometheus_user }}
+Group={{ prometheus_group }}
+
+WorkingDirectory=-{{ prometheus_install_path }}
+
+Environment=GOGC=40
+Environment=GOMAXPROCS=1
+
+{% if prometheus_node_exporter_opts is defined %}
+ExecStart={{ prometheus_install_path }}/node_exporter {{ prometheus_node_exporter_opts }}
+{% else %}
+ExecStart={{ prometheus_install_path }}/node_exporter
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target
