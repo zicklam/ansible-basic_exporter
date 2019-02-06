@@ -1,0 +1,44 @@
+---
+
+# apache_exporter
+apache_default_port: 80
+prometheus_apache_exporter_default_port: 9117
+prometheus_apache_exporter_opts: |
+        -scrape_uri=http://localhost:{{ apache_default_port }}/server-status/?auto \
+            -telemetry.address ":{{ prometheus_apache_exporter_default_port }}"
+
+# node_exporter
+prometheus_node_exporter_opts: |
+        --collector.diskstats.ignored-devices="^(ram|loop|fd|(h|s|v|xv)d[a-z]|sr|sr\\d+|dm-|nvme\\d+n\\d+p)\\d+$" \
+            --collector.filesystem.ignored-mount-points="^/(dev|proc|sys|var/lib/docker)($|/)" \
+            --collector.filesystem.ignored-fs-types="^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$" \
+            --collector.logind \
+            --collector.systemd \
+            --no-collector.bonding \
+            --no-collector.edac \
+            --no-collector.hwmon \
+            --no-collector.infiniband \
+            --no-collector.mdadm \
+            --no-collector.nfs \
+            --no-collector.nfsd \
+            --no-collector.ntp \
+            --no-collector.textfile \
+            --no-collector.uname \
+            --no-collector.wifi \
+            --no-collector.zfs \
+            --log.level=warn \
+            --log.format=logger:syslog?appname=node_exporter&local=7 \
+            --web.listen-address=:9100
+
+# varnish_exporter
+#prometheus_varnish_exporter_opts: 
+
+# Git repositories
+git_repo_apache_exporter:  Lusitaniae/apache_exporter
+git_repo_node_exporter:    prometheus/node_exporter
+git_repo_varnish_exporter: jonnenauha/prometheus_varnish_exporter
+
+# generated download links (as example)
+# OK: https://github.com/Lusitaniae/apache_exporter/releases/download/v0.5.0/apache_exporter-0.5.0.linux-amd64.tar.gz
+# OK: https://github.com/prometheus/node_exporter/releases/download/v0.16.0/node_exporter-0.16.0.linux-amd64.tar.gz
+# OK without v: https://github.com/jonnenauha/prometheus_varnish_exporter/releases/download/1.4.1/prometheus_varnish_exporter-1.4.1.linux-amd64.tar.gz

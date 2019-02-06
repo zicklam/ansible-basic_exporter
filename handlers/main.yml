@@ -1,0 +1,36 @@
+---
+
+- name: yum clean metadata
+  command: yum clean metadata
+  args:
+    warn: no
+
+# apache_exporter
+- name: apache_exporter start
+  service: name=apache_exporter state=started
+
+- name: apache_exporter stop
+  service: name=apache_exporter state=stopped
+
+- name: apache_exporter restart
+  service: name=apache_exporter state=restarted
+
+# node_exporter
+- name: node_exporter start
+  service: name=node_exporter state=started
+
+- name: node_exporter stop
+  service: name=node_exporter state=stopped
+
+- name: node_exporter restart
+  service: name=node_exporter state=restarted
+
+# varnish_exporter
+- name: varnish_exporter start
+  service: name=varnish_exporter state=started
+
+- name: varnish_exporter stop
+  service: name=varnish_exporter state=stopped
+
+- name: varnish_exporter restart
+  service: name=varnish_exporter state=restarted

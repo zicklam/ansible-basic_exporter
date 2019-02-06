@@ -1,0 +1,62 @@
+---
+# Systmed path
+- block:
+    - name: Get systemd system configuration directory
+      shell: >
+        pkg-config systemd --variable=systemdsystemconfdir
+      register: systemd_conf_dir
+    - name: Set variable systemd_path
+      set_fact:
+        systemd_path: "{{ systemd_conf_dir.stdout }}"
+  when: ansible_service_mgr == "systemd"
+
+# Set architecture/platform suffix for github releases
+- name: github.com | set_fact platform-suffix 32bit
+  set_fact:
+    architecture: i386
+    platform_suffix: linux-386
+  when: 
+    - ansible_userspace_bits == "32"
+    - ansible_system == "Linux"
+
+- name: github.com | set_fact platform-suffix 64bit
+  set_fact:
+    architecture: x86_64
+    platform_suffix: linux-amd64
+  when: 
+    - ansible_userspace_bits == "64"
+    - ansible_system == "Linux" 
+
+# Prometheus defaults
+- name: OC-KPI | set default prometheus group
+  group:
+    name: "{{ prometheus_group }}"
+    gid: "{{ prometheus_group_id }}"
+    state: present
+  become: true
+
+- name: OC-KPI | set default prometheus user
+  user:
+    name: "{{ prometheus_user }}"
+    uid: "{{ prometheus_user_id }}"
+    group: "{{ prometheus_group }}"
+    createhome: no
+    shell: /sbin/nologin
+    comment: "Prometheus User"
+    state: present
+    append: yes
+  become: true
+
+- name: OC-KPI | create default paths if not present
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "u=rwx,g=rx,o="
+  with_items:
+    #- "{{ prometheus_install_path }}"
+    #- "{{ prometheus_config_path }}"
+    - "{{ prometheus_log_path }}"
+    - "{{ prometheus_pid_path }}"
+  become: true
