@@ -1,4 +1,10 @@
 ---
+
+- name: use traditional SysV init
+  set_fact:
+    use_systemd: false
+  when: 
+
 # Systmed path
 - block:
     - name: Get systemd system configuration directory

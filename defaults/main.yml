@@ -1,5 +1,28 @@
 ---
 
+# gerneric role defaults:
+prometheus_user:                      prometheus
+prometheus_group:                     "{{ prometheus_user }}"
+prometheus_user_id:                   10069
+prometheus_group_id:                  "{{ prometheus_user_id }}"
+
+prometheus_version:                   2.5.0
+prometheus_alertmanager_version:      0.15.2
+prometheus_pushgateway_version:       0.5.2
+prometheus_blackbox_exporter_version: 0.12.0
+
+prometheus_apache_exporter_version:   0.5.0
+prometheus_node_exporter_version:     latest
+prometheus_varnish_exporter_version:  latest  # better use latest here, cause the tagging on github.com is different with the default: 1.4.1 instead of v1.4.1
+
+prometheus_install_path:              /usr/local/bin
+prometheus_config_path:               /etc/prometheus
+prometheus_rule_path:                 "{{ prometheus_config_path }}/rules"
+prometheus_data_path:                 /var/lib/prometheus
+prometheus_log_path:                  /var/log/prometheus
+prometheus_pid_path:                  /var/run/prometheus
+prometheus_download_path:             /tmp
+
 # apache_exporter
 apache_default_port: 80
 prometheus_apache_exporter_default_port: 9117
