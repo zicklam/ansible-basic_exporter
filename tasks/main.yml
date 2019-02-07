@@ -1,16 +1,4 @@
 ---
-
-#- name: Print environment
-#  shell: "echo $https_proxy"
-#  environment: "{{ proxy_env }}"
-#  register: blabla
-#  
-#- debug:
-#    msg:
-#      - "{{ blabla.stdout }}"
-#  
-#- meta: end_play
-
 - name: set defaults (user/group/paths) for further installations
   include: set-defaults.yml
 
@@ -20,16 +8,6 @@
   with_items:
     - "{{ prometheus_components }}"
 
-
-##### - name: LOOP to install prometheus components 
-#####   include: loop-exporter.yml
-#####   vars:
-#####     component: "{{ loop_component }}"
-#####   with_items:
-#####     - "{{ prometheus_components }}"
-#####   loop_control:
-#####     loop_var: loop_component
-##### 
 # offene todos:
 # - systemd unit files löschen wenn falsch
 # - alte executables löschen

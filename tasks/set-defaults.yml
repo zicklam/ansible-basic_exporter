@@ -1,9 +1,6 @@
 ---
-
-- name: use traditional SysV init
-  set_fact:
-    use_systemd: false
-  when: 
+# select the service manager (lol)
+# Systemd vs. SysVinit
 
 # Systmed path
 - block:
