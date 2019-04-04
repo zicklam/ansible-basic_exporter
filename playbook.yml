@@ -1,0 +1,12 @@
+---
+- name: Ansible Playbook to install the basic prometheus exporters (node_exporter, apache_exporter, varnish_exporter)
+  hosts: basic_exporter
+
+  # pre_tasks:
+  #  - include: 'tasks/set-global-variables.yml'
+
+  roles:
+    - { role: basic_exporter, when: "prometheus_components is defined" }
+
+  vars_files:
+    - 'defaults/main.yml'
