@@ -1,11 +1,11 @@
 [Unit]
 Description=Prometheus Varnish Exporter (varnish_exporter) via ansible role
 Documentation=https://mat-alm-1.materna-com.de/kpi/ansible/roles/basic_exporter
-After=network.target
+After=network.target varnish.service
 
 [Service]
 User={{ prometheus_user }}
-Group={{ prometheus_group }}
+Group=varnish
 
 Environment=GOGC=40
 Environment=GOMAXPROCS=1
@@ -15,6 +15,9 @@ ExecStart={{ prometheus_install_path }}/varnish_exporter {{ prometheus_varnish_e
 {% else %}
 ExecStart={{ prometheus_install_path }}/varnish_exporter
 {% endif %}
+
+Restart=on-failure
+RestartSec=60s
 
 [Install]
 WantedBy=multi-user.target
