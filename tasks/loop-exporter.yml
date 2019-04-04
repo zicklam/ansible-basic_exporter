@@ -8,6 +8,12 @@
 
 # running process found
 # decision-tree if we need to reinstall this component
+#
+#  conditions for reinstall:
+#  - old version
+#  - wrong installation path
+#  - wrong systemd unit script
+#
 - block:
 
   - name: readlink
@@ -25,14 +31,26 @@
     debug:
       msg: "{{ path.stdout }} ----> {{ version.stdout }}"
 
-  - name: systemd.unit
-    shell: >
-      systemctl status {{ pid.stdout }} | grep -oP '([a-zA-Z0-9-_\/]+.service)' || echo -e "no_service\nno_service"
-    register: systemd_unit
+  - block:
 
-  - name: remove obsolet processes
-    include: reinstall-exporter.yml
-    when: path.stdout != prometheus_install_path + "/" + component or systemd_unit.stdout_lines[0] != component + ".service" or systemd_unit.stdout_lines[1] != systemd_path + "/" + component + ".service" or version.stdout is version(vars['prometheus_' + component + '_version']|int, '<') or vars['prometheus_' + component + '_force_reinstall']|bool == true
+    - name: systemd.unit
+      shell: >
+        systemctl status {{ pid.stdout }} | grep -oP '([a-zA-Z0-9-_\/]+.service)' || echo -e "no_service\nno_service"
+      register: systemd_unit
+
+    - name: reinstall {{ component }} as systemd service
+      include: reinstall-exporter.yml
+      when: (path.stdout != prometheus_install_path + "/" + component) or (version.stdout is version(vars['prometheus_' + component + '_version']|int, '<')) or (vars['prometheus_' + component + '_force_reinstall']|bool == true) or (systemd_unit.stdout_lines[0] != component + ".service") or (systemd_unit.stdout_lines[1] != systemd_path + "/" + component + ".service")
+
+    when: ansible_service_mgr == "systemd"
+
+  - block:
+
+    - name: reinstall {{ component }} as systemd service
+      include: reinstall-exporter.yml
+      when: (path.stdout != prometheus_install_path + "/" + component) or (version.stdout is version(vars['prometheus_' + component + '_version']|int, '<')) or (vars['prometheus_' + component + '_force_reinstall']|bool == true)
+
+    when: ansible_service_mgr == "upstart"
 
   when:
     - pid.stdout != ""

@@ -3,27 +3,57 @@
 
 - include: download-exporter.yml
 
-# Service installation via systemd
+# Service installation
+- name: Check that {{ component }} exists
+  stat:
+    path: "{{ prometheus_install_path }}/{{ component }}"
+  register: "{{ component }}_stat"
+
 - block:
 
-  - name: "Check that {{ component }} exists"
+  - name: check is "gosu" exist already
     stat:
-      path: "{{ prometheus_install_path }}/{{ component }}"
-    register: "{{ component }}_stat"
+      path: /usr/local/bin/gosu
+    register: "gosu_stat"
 
-  - name: copy systemd config to server
+  - name: install helper utility "gosu"
+    include: install-gosu.yml
+    when: gosu_stat.stat.exists|bool == false
+
+  - name: Copy service script for {{ component }}
+    template: 
+      src: "{{ component }}.sysvinit.{{ ansible_os_family|lower }}.sh.j2"
+      dest: "/etc/init.d/{{ component }}"
+      mode: a+x
+    become: true
+    when: vars[component + '_stat'].stat.exists|bool == true
+  
+  - name: enable sysvinit service for {{ component }}
+    sysvinit:
+      name: "{{ component }}"
+      enabled: yes
+      state: started
+    become: true
+    notify: "{{ component }} start"
+
+  when: ansible_service_mgr == "upstart"
+
+- block:
+
+  - name: Copy service script for {{ component }}
     template: 
       src: "{{ component }}.service.j2"
       dest: "{{ systemd_path }}/{{ component }}.service"
     become: true
     when: vars[component + '_stat'].stat.exists|bool == true
-    
-  - name: enable systemd service {{ component }}
+
+  - name: enable systemd service for {{ component }}
     systemd:
       name: "{{ component }}.service"
       enabled: yes
       daemon_reload: yes
       state: started
     become: true
-  
+    notify: "{{ component }} start"
+
   when: ansible_service_mgr == "systemd"
