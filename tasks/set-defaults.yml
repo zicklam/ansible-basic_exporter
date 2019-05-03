@@ -50,7 +50,8 @@
     append: yes
   become: true
   register: user_creation
-  failed_when: user_creation.rc > 0 and user_creation.rc != 8
+  ignore_errors: yes
+  #failed_when: user_creation.rc > 0 and user_creation.rc != 8
 
 - name: OC-KPI | create default paths if not present
   file:
